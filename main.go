@@ -46,13 +46,15 @@ type Config struct {
 	}
 	Stations struct {
 		Gas struct {
-			Count        int           `yaml:"count"`
+			Count        int `yaml:"count"`
+			totalTime    time.Duration
 			ServeTimeMin time.Duration `yaml:"serve_time_min"`
 			ServeTimeMax time.Duration `yaml:"serve_time_max"`
 		}
 	}
 	Registers struct {
-		Count         int           `yaml:"count"`
+		Count         int `yaml:"count"`
+		totalTime     time.Duration
 		HandleTimeMin time.Duration `yaml:"handle_time_min"`
 		HandleTimeMax time.Duration `yaml:"handle_time_max"`
 	}
@@ -63,16 +65,16 @@ func main() {
 	var config Config
 	// ... (načtení konfigurace z YAML)
 	path := "./config.yaml"
-	cfg, err := loadConfig(path)
+	loadedData, err := loadConfig(path)
 	if err != nil {
 		fmt.Println("Chyba při načítání konfigurace:", err)
 		return
 	}
 	// Inicializace kanálů
-	carChannel := make(chan Car, cfg.Cars.Count)
-	queue := make(chan Car, cfg.Cars.Count) // Buffer channel to limit queue size (optional)
-	stationFree := make(chan struct{}, cfg.Stations.Gas.Count)
-	registerFree := make(chan struct{}, cfg.Registers.Count)
+	carChannel := make(chan Car, loadedData.Cars.Count)
+	queue := make(chan Car, loadedData.Cars.Count)
+	stationFree := make(chan struct{}, loadedData.Stations.Gas.Count)
+	registerFree := make(chan struct{}, loadedData.Registers.Count)
 
 	// Spuštění goroutines
 	go func() {
@@ -113,7 +115,7 @@ func main() {
 	fmt.Println("Statistiky:")
 	fmt.Println("Stanice:")
 	fmt.Println("  Gas:")
-	fmt.Printf("    Celkem aut: %d\n", getStationStats("gas", config.Stations).totalCars)
+	fmt.Printf("    Celkem aut: %d\n", getStationStats("gas", config).totalCars)
 	fmt.Printf("    Průměrná doba čekání: %s\n", calculateAvgRegisterTime(totalRegisterTime, config.Cars.Count))
 	fmt.Println("Celkový čas simulace:", time.Since(startTime))
 }
@@ -166,9 +168,9 @@ func runRegister(registerFree chan struct{}, queue chan Car, register CashRegist
 	}
 }
 
-func getStationStats(stationType string, stations Config.Station) (stats Station) {
+func getStationStats(stationType string, stations Config) (stats Station) {
 	if stationType == "gas" {
-		stats = stations.Gas
+		stats = stations.Stations.Gas
 	} else {
 		// Handle error or other station types if needed
 	}
