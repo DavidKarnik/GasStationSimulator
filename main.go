@@ -2,38 +2,16 @@ package main
 
 import (
 	"fmt"
+	"gasStation/Struct"
 	"gopkg.in/yaml.v2"
 	"math/rand"
 	"os"
 	"time"
 )
 
-// Config stores the configuration parameters for the simulation
-type Config struct {
-	Cars struct {
-		Count          int           `yaml:"count"`
-		ArrivalTimeMin time.Duration `yaml:"arrival_time_min"`
-		ArrivalTimeMax time.Duration `yaml:"arrival_time_max"`
-	}
-	Stations struct {
-		Gas struct {
-			Count        int `yaml:"count"`
-			totalTime    time.Duration
-			ServeTimeMin time.Duration `yaml:"serve_time_min"`
-			ServeTimeMax time.Duration `yaml:"serve_time_max"`
-		}
-	}
-	Registers struct {
-		Count         int `yaml:"count"`
-		totalTime     time.Duration
-		HandleTimeMin time.Duration `yaml:"handle_time_min"`
-		HandleTimeMax time.Duration `yaml:"handle_time_max"`
-	}
-}
-
 func main() {
 	// Načtení konfigurace z config.yaml
-	var config Config
+	var config Struct.Config
 	// ... (načtení konfigurace z YAML)
 	path := "./config.yaml"
 	loadedData, err := loadConfig(path)
@@ -42,25 +20,25 @@ func main() {
 		return
 	}
 	// Inicializace kanálů
-	carChannel := make(chan Car, loadedData.Cars.Count)
-	queue := make(chan Car, loadedData.Cars.Count)
-	stationFree := make(chan struct{}, loadedData.Stations.Gas.Count)
-	registerFree := make(chan struct{}, loadedData.Registers.Count)
+	carChannel := make(chan Struct.Car, loadedData.Struct.Cars.Count)
+	queue := make(chan Struct.Car, loadedData.Struct.Cars.Count)
+	stationFree := make(chan struct{}, loadedData.Struct.Stations.Gas.Count)
+	registerFree := make(chan struct{}, loadedData.Struct.Registers.Count)
 
 	// Spuštění goroutines
 	go func() {
 		for i := 0; i < config.Cars.Count; i++ {
-			car := Car{id: i, arriveTime: time.Now()}
+			car := Struct.Car{Struct.id: i, Struct.arriveTime: time.Now()}
 			time.Sleep(time.Duration(rand.Intn(int(config.Cars.ArrivalTimeMax-config.Cars.ArrivalTimeMin))) + config.Cars.ArrivalTimeMin)
 			carChannel <- car
 		}
 		close(carChannel)
 	}()
 
-	go runStation(stationFree, queue, Station{stationType: "gas", serveTimeMin: config.Stations.Gas.ServeTimeMin, serveTimeMax: config.Stations.Gas.ServeTimeMax})
+	go runStation(stationFree, queue, Struct.Station{stationType: "gas", serveTimeMin: config.Stations.Gas.ServeTimeMin, serveTimeMax: config.Stations.Gas.ServeTimeMax})
 
 	for i := 0; i < config.Registers.Count; i++ {
-		go runRegister(registerFree, queue, CashRegister{handleTimeMin: config.Registers.HandleTimeMin, handleTimeMax: config.Registers.HandleTimeMax})
+		go runRegister(registerFree, queue, Struct.CashRegister{handleTimeMin: config.Registers.HandleTimeMin, handleTimeMax: config.Registers.HandleTimeMax})
 	}
 
 	// Simulace
@@ -91,7 +69,7 @@ func main() {
 	fmt.Println("Celkový čas simulace:", time.Since(startTime))
 }
 
-func loadConfig(path string) (config Config, err error) {
+func loadConfig(path string) (config Struct.Config, err error) {
 	// Otevření souboru s konfigurací
 	file, err := os.Open(path)
 	if err != nil {
@@ -109,7 +87,7 @@ func loadConfig(path string) (config Config, err error) {
 	return config, nil
 }
 
-func runStation(stationFree chan struct{}, queue chan Car, station Station) {
+func runStation(stationFree chan struct{}, queue chan Struct.Car, station Struct.Station) {
 	for {
 		<-stationFree
 		car := <-queue
@@ -124,7 +102,7 @@ func runStation(stationFree chan struct{}, queue chan Car, station Station) {
 	}
 }
 
-func runRegister(registerFree chan struct{}, queue chan Car, register CashRegister) {
+func runRegister(registerFree chan struct{}, queue chan Struct.Car, register Struct.CashRegister) {
 	for {
 		<-registerFree
 		car := <-queue
@@ -139,7 +117,7 @@ func runRegister(registerFree chan struct{}, queue chan Car, register CashRegist
 	}
 }
 
-func getStationStats(stationType string, stations Config) (stats Station) {
+func getStationStats(stationType string, stations Struct.Config) (stats Struct.Station) {
 	if stationType == "gas" {
 		stats = stations.Stations.Gas
 	} else {
