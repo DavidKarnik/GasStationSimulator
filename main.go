@@ -5,37 +5,8 @@ import (
 	"gopkg.in/yaml.v2"
 	"math/rand"
 	"os"
-	"sync"
 	"time"
 )
-
-// Car represents a car in the simulation
-type Car struct {
-	id           int
-	arriveTime   time.Time
-	queueTime    time.Duration
-	stationTime  time.Duration
-	registerTime time.Duration
-}
-
-// Station represents a gas station pump
-type Station struct {
-	stationType  string
-	serveTimeMin time.Duration
-	serveTimeMax time.Duration
-	mutex        sync.Mutex
-	totalCars    int
-	totalTime    time.Duration
-}
-
-// CashRegister represents a cash register at the station
-type CashRegister struct {
-	handleTimeMin time.Duration
-	handleTimeMax time.Duration
-	mutex         sync.Mutex
-	totalCars     int
-	totalTime     time.Duration
-}
 
 // Config stores the configuration parameters for the simulation
 type Config struct {
