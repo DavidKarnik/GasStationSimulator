@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gasStation/Struct"
 	"gopkg.in/yaml.v2"
+	"log"
 	"math/rand"
 	"os"
 	"time"
@@ -139,4 +140,19 @@ func calculateAvgRegisterTime(totalTime time.Duration, totalCars int) time.Durat
 		return 0
 	}
 	return totalTime / time.Duration(totalCars)
+}
+
+// loadConfigFile loads configuration from yaml into set variables
+func loadConfigFile() {
+	file, err := os.ReadFile("config.yaml")
+	if err != nil {
+		log.Fatalf("Error reading config.yaml file: %v", err)
+	}
+
+	var config Struct.Config
+	err = yaml.Unmarshal(file, &config)
+	if err != nil {
+		log.Fatalf("Error unmarshalling config.yaml file: %v", err)
+	}
+
 }
