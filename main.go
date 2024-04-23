@@ -155,4 +155,31 @@ func loadConfigFile() {
 		log.Fatalf("Error unmarshalling config.yaml file: %v", err)
 	}
 
+	fillStructVariablesForServices(config)
+}
+
+func fillStructVariablesForServices(config Struct.Config) {
+	Struct.ArrivalTimeMin = config.Cars.ArrivalTimeMin
+	Struct.ArrivalTimeMax = config.Cars.ArrivalTimeMax
+	Struct.NumCars = config.Cars.Count
+
+	Struct.NumGas = config.Stations.Gas.Count
+	Struct.GasMinT = config.Stations.Gas.ServeTimeMin
+	Struct.GasMaxT = config.Stations.Gas.ServeTimeMax
+
+	Struct.NumDiesel = config.Stations.Diesel.Count
+	Struct.DieselMinT = config.Stations.Diesel.ServeTimeMin
+	Struct.DieselMaxT = config.Stations.Diesel.ServeTimeMax
+
+	Struct.NumLPG = config.Stations.Lpg.Count
+	Struct.LpgMinT = config.Stations.Lpg.ServeTimeMin
+	Struct.LpgMaxT = config.Stations.Lpg.ServeTimeMax
+
+	Struct.NumElectric = config.Stations.Electric.Count
+	Struct.ElectricMinT = config.Stations.Electric.ServeTimeMin
+	Struct.ElectricMaxT = config.Stations.Electric.ServeTimeMax
+
+	Struct.NumRegisters = config.Registers.Count
+	Struct.MinPaymentT = config.Registers.HandleTimeMin
+	Struct.MaxPaymentT = config.Registers.HandleTimeMax
 }
