@@ -1,78 +1,78 @@
 package main
 
 import (
-	"fmt"
+	"gasStation/Services"
 	"gasStation/Struct"
 	"gopkg.in/yaml.v2"
 	"log"
-	"math/rand"
 	"os"
 	"sync"
-	"time"
 )
 
-var end sync.WaitGroup
+// my main synchronization
+var everythingEnds sync.WaitGroup
 
+// main function
 func main() {
-	// Načtení konfigurace z config.yaml
-	var config Struct.Config
-	// ... (načtení konfigurace z YAML)
-	path := "./config.yaml"
-	loadedData, err := loadConfig(path)
-	if err != nil {
-		fmt.Println("Chyba při načítání konfigurace:", err)
-		return
+
+	loadConfigFile()
+
+	// Creating fuel stands
+	var stands []*Struct.FuelStand
+	standCount := 0
+	// Adding gas stands
+	for i := 0; i < Struct.NumGas; i++ {
+		stands = append(stands, Services.NewFuelStand(standCount, Struct.Gas, Struct.StandBuffer))
+		standCount++
 	}
-	// Inicializace kanálů
-	carChannel := make(chan Struct.Car, loadedData.Struct.Cars.Count)
-	queue := make(chan Struct.Car, loadedData.Struct.Cars.Count)
-	stationFree := make(chan struct{}, loadedData.Struct.Stations.Gas.Count)
-	registerFree := make(chan struct{}, loadedData.Struct.Registers.Count)
-
-	// Spuštění goroutines
-	go func() {
-		for i := 0; i < config.Cars.Count; i++ {
-			car := Struct.Car{Struct.id: i, Struct.arriveTime: time.Now()}
-			time.Sleep(time.Duration(rand.Intn(int(config.Cars.ArrivalTimeMax-config.Cars.ArrivalTimeMin))) + config.Cars.ArrivalTimeMin)
-			carChannel <- car
-		}
-		close(carChannel)
-	}()
-
-	go runStation(stationFree, queue, Struct.Station{stationType: "gas", serveTimeMin: config.Stations.Gas.ServeTimeMin, serveTimeMax: config.Stations.Gas.ServeTimeMax})
-
-	for i := 0; i < config.Registers.Count; i++ {
-		go runRegister(registerFree, queue, Struct.CashRegister{handleTimeMin: config.Registers.HandleTimeMin, handleTimeMax: config.Registers.HandleTimeMax})
+	// Adding diesel stands
+	for i := 0; i < Struct.NumDiesel; i++ {
+		stands = append(stands, Services.NewFuelStand(standCount, Struct.Diesel, Struct.StandBuffer))
+		standCount++
 	}
-	end.Add(1)
-
-	// Simulace
-	var totalQueueTime time.Duration
-	var totalStationTime time.Duration
-	var totalRegisterTime time.Duration
-	var startTime = time.Now()
-	for i := 0; i < config.Cars.Count; i++ {
-		car := <-carChannel
-		car.queueTime = time.Since(car.arriveTime)
-		queue <- car
-		stationFree <- struct{}{}
+	// Adding lpg stands
+	for i := 0; i < Struct.NumLPG; i++ {
+		stands = append(stands, Services.NewFuelStand(standCount, Struct.LPG, Struct.StandBuffer))
+		standCount++
 	}
-
-	for i := 0; i < config.Cars.Count; i++ {
-		car := <-queue
-		totalQueueTime += car.queueTime
-		totalStationTime += car.stationTime
-		totalRegisterTime += car.registerTime
+	// Adding electric stands
+	for i := 0; i < Struct.NumElectric; i++ {
+		stands = append(stands, Services.NewFuelStand(standCount, Struct.Electric, Struct.StandBuffer))
+		standCount++
 	}
+	// Creating registers
+	var registers []*Struct.CashRegister
+	for i := 0; i < Struct.NumRegisters; i++ {
+		registers = append(registers, Services.NewCashRegister(i, Struct.RegisterBuffer))
+	}
+	everythingEnds.Add(1)
+	// Car creation routine
+	go Services.CreateCarsRoutine()
+	// Stand routines
+	Struct.StandCreationWaiter.Add(standCount)
+	for _, stand := range stands {
+		go Services.FuelStandRoutine(stand)
+	}
+	Struct.StandCreationWaiter.Wait()
+	// CashRegister routines
+	for _, register := range registers {
+		go Services.RegisterRoutine(register)
+	}
+	// Car shuffling routine
+	go Services.FindStandRoutine(stands)
+	// Register shuffling routine
+	go Services.FindRegister(registers)
 
-	// Výpis statistik
-	fmt.Println("Statistiky:")
-	fmt.Println("Stanice:")
-	fmt.Println("  Gas:")
-	fmt.Printf("    Celkem aut: %d\n", getStationStats("gas", config).totalCars)
-	fmt.Printf("    Průměrná doba čekání: %s\n", calculateAvgRegisterTime(totalRegisterTime, config.Cars.Count))
-	fmt.Println("Celkový čas simulace:", time.Since(startTime))
-	end.Wait()
+	// Create output.yaml and wait for print (sync.WaitGroup)
+	go Services.EvaluationRoutine(&everythingEnds)
+
+	// End synchronizations
+	Struct.StandFinishWaiter.Wait()
+	close(Struct.BuildingQueue)
+	Struct.RegisterWaiter.Wait()
+	close(Struct.Exit)
+
+	everythingEnds.Wait()
 }
 
 // loadConfigFile loads configuration from yaml into set variables

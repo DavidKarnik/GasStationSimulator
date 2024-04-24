@@ -1,32 +1,75 @@
 package Services
 
 import (
+	"fmt"
 	"gasStation/Struct"
-	"math/rand"
 	"time"
 )
 
-func runStation(stationFree chan struct{}, queue chan Struct.Car, station Struct.Station) {
-	for {
-		<-stationFree
-		car := <-queue
-		station.mutex.Lock()
-		station.totalCars++
-		station.mutex.Unlock()
-		car.stationTime = time.Duration(rand.Intn(int(station.serveTimeMax-station.serveTimeMin))) + station.serveTimeMin
-		time.Sleep(car.stationTime)
-		station.totalTime += car.stationTime
-		station.mutex.Unlock()
-		stationFree <- struct{}{}
+// NewFuelStand - Creates a FuelStand
+func NewFuelStand(id int, fuel Struct.FuelType, bufferSize int) *Struct.FuelStand {
+	return &Struct.FuelStand{
+		Id:    id,
+		Type:  fuel,
+		Queue: make(chan *Struct.Car, bufferSize),
 	}
 }
 
-func getStationStats(stationType string, stations Struct.Config) (stats Struct.Station) {
-	if stationType == "gas" {
-		stats = stations.Stations.Gas
-	} else {
-		// Handle error or other station types if needed
+// FindStandRoutine - Finds the best stand according to fuel type
+func FindStandRoutine(stands []*Struct.FuelStand) {
+	// Station entrance queue
+	for car := range Struct.Arrivals {
+		// Initialization
+		var bestStand *Struct.FuelStand
+		bestQueueLength := -1
+		// Finding best stand
+		for _, stand := range stands {
+			if stand.Type == car.Fuel {
+				queueLength := len(stand.Queue)
+				if bestQueueLength == -1 || queueLength < bestQueueLength {
+					bestStand = stand
+					bestQueueLength = queueLength
+				}
+			}
+		}
+		bestStand.Queue <- car
 	}
-	stats.avgQueueTime = calculateAvgWaitTime(stats.totalCars, 0, stats.totalTime)
-	return stats
+	// Closing all stands
+	for _, stand := range stands {
+		close(stand.Queue)
+	}
+}
+
+// FuelStandRoutine - Go routine for FuelStand
+func FuelStandRoutine(fs *Struct.FuelStand) {
+	defer Struct.StandFinishWaiter.Done()
+	Struct.StandFinishWaiter.Add(1)
+	fmt.Printf("Fuel stand %d is open\n", fs.Id)
+	Struct.StandCreationWaiter.Done()
+	// Stand queue
+	for car := range fs.Queue {
+		car.StandQueueTime = time.Duration(time.Since(car.StandQueueEnter).Milliseconds())
+		doFuelingSleeping(car)
+		car.CarSync.Add(1)
+		// Sending car to registers
+		Struct.BuildingQueue <- car
+		// Wait for payment to complete
+		car.CarSync.Wait()
+	}
+	fmt.Printf("Fuel stand %d is closed\n", fs.Id)
+}
+
+// doFuelingSleeping does fueling
+func doFuelingSleeping(car *Struct.Car) {
+	switch car.Fuel {
+	case Struct.Gas:
+		car.FuelTime = randomTime(Struct.GasMinT, Struct.GasMaxT)
+	case Struct.Diesel:
+		car.FuelTime = randomTime(Struct.DieselMinT, Struct.DieselMaxT)
+	case Struct.LPG:
+		car.FuelTime = randomTime(Struct.LpgMinT, Struct.LpgMaxT)
+	case Struct.Electric:
+		car.FuelTime = randomTime(Struct.ElectricMinT, Struct.ElectricMaxT)
+	}
+	doSleeping(car.FuelTime)
 }

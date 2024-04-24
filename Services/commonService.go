@@ -1,17 +1,18 @@
 package Services
 
-import "time"
+import (
+	"math/rand"
+	"time"
+)
 
-func calculateAvgWaitTime(totalCars int, totalWaitTime time.Duration, totalTime time.Duration) time.Duration {
-	if totalCars == 0 {
-		return 0
-	}
-	return totalWaitTime / time.Duration(totalCars)
+// commonService - used in registerService and stationService
+
+// randomTime - Generates a random time from min to max
+func randomTime(min, max int) time.Duration {
+	return time.Duration(rand.Intn(max-min) + min)
 }
 
-func calculateAvgRegisterTime(totalTime time.Duration, totalCars int) time.Duration {
-	if totalCars == 0 {
-		return 0
-	}
-	return totalTime / time.Duration(totalCars)
+// doSleeping - Blocking Sleep
+func doSleeping(delay time.Duration) {
+	time.Sleep(delay * time.Millisecond)
 }
