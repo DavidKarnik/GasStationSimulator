@@ -7,8 +7,11 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"sync"
 	"time"
 )
+
+var end sync.WaitGroup
 
 func main() {
 	// Načtení konfigurace z config.yaml
@@ -41,6 +44,7 @@ func main() {
 	for i := 0; i < config.Registers.Count; i++ {
 		go runRegister(registerFree, queue, Struct.CashRegister{handleTimeMin: config.Registers.HandleTimeMin, handleTimeMax: config.Registers.HandleTimeMax})
 	}
+	end.Add(1)
 
 	// Simulace
 	var totalQueueTime time.Duration
@@ -68,6 +72,7 @@ func main() {
 	fmt.Printf("    Celkem aut: %d\n", getStationStats("gas", config).totalCars)
 	fmt.Printf("    Průměrná doba čekání: %s\n", calculateAvgRegisterTime(totalRegisterTime, config.Cars.Count))
 	fmt.Println("Celkový čas simulace:", time.Since(startTime))
+	end.Wait()
 }
 
 func loadConfig(path string) (config Struct.Config, err error) {
