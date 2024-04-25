@@ -14,59 +14,53 @@ var everythingEnds sync.WaitGroup
 
 // main function
 func main() {
-
 	loadConfigFile()
 
-	// Creating fuel stands
+	// initialize stands and registers -----------------------------------------
 	var stands []*Struct.FuelStand
-	standCount := 0
-	// Adding gas stands
-	for i := 0; i < Struct.NumGas; i++ {
-		stands = append(stands, Services.NewFuelStand(standCount, Struct.Gas, Struct.StandBuffer))
-		standCount++
-	}
-	// Adding diesel stands
-	for i := 0; i < Struct.NumDiesel; i++ {
-		stands = append(stands, Services.NewFuelStand(standCount, Struct.Diesel, Struct.StandBuffer))
-		standCount++
-	}
-	// Adding lpg stands
-	for i := 0; i < Struct.NumLPG; i++ {
-		stands = append(stands, Services.NewFuelStand(standCount, Struct.LPG, Struct.StandBuffer))
-		standCount++
-	}
-	// Adding electric stands
-	for i := 0; i < Struct.NumElectric; i++ {
-		stands = append(stands, Services.NewFuelStand(standCount, Struct.Electric, Struct.StandBuffer))
-		standCount++
-	}
-	// Creating registers
 	var registers []*Struct.CashRegister
+	standCount := 0
+	// map with fuel types -> gas stands
+	fuelTypes := map[Struct.FuelType]int{
+		Struct.Gas:      Struct.NumGas,
+		Struct.Diesel:   Struct.NumDiesel,
+		Struct.LPG:      Struct.NumLPG,
+		Struct.Electric: Struct.NumElectric,
+	}
+	// .. append all gas stands
+	for fuelType, numStands := range fuelTypes {
+		for i := 0; i < numStands; i++ {
+			stands = append(stands, Services.NewFuelStand(standCount, fuelType, Struct.StandBuffer))
+			standCount++
+		}
+	}
+	// add cash registers to array
 	for i := 0; i < Struct.NumRegisters; i++ {
 		registers = append(registers, Services.NewCashRegister(i, Struct.RegisterBuffer))
 	}
 	everythingEnds.Add(1)
-	// Car creation routine
-	go Services.CreateCarsRoutine()
-	// Stand routines
+
+	// Creating routines ------------------------------------------------------
+	go Services.CreateCarsRoutine() // car
+	// for Stands
 	Struct.StandCreationWaiter.Add(standCount)
 	for _, stand := range stands {
 		go Services.FuelStandRoutine(stand)
 	}
 	Struct.StandCreationWaiter.Wait()
-	// CashRegister routines
+	// for Registers
 	for _, register := range registers {
 		go Services.RegisterRoutine(register)
 	}
-	// Car shuffling routine
-	go Services.FindStandRoutine(stands)
-	// Register shuffling routine
-	go Services.FindRegister(registers)
 
-	// Create output.yaml and wait for print (sync.WaitGroup)
+	// go routines for finding best scenarios
+	go Services.FindStandRoutine(stands)
+	go Services.FindCashRegister(registers)
+
+	// create output.yaml and wait for print (sync.WaitGroup)
 	go Services.EvaluationRoutine(&everythingEnds)
 
-	// End synchronizations
+	// end synchronizations -> close
 	Struct.StandFinishWaiter.Wait()
 	close(Struct.BuildingQueue)
 	Struct.RegisterWaiter.Wait()
@@ -75,7 +69,7 @@ func main() {
 	everythingEnds.Wait()
 }
 
-// loadConfigFile loads configuration from yaml into set variables
+// loadConfigFile - loads configuration from yaml into set variables
 func loadConfigFile() {
 	file, err := os.ReadFile("config.yaml")
 	if err != nil {

@@ -14,8 +14,8 @@ func NewCashRegister(id, bufferSize int) *Struct.CashRegister {
 	}
 }
 
-// FindRegister - Finds the best cash register for a car
-func FindRegister(registers []*Struct.CashRegister) {
+// FindCashRegister - Finds the best cash register for a car
+func FindCashRegister(registers []*Struct.CashRegister) {
 	// Station building queue
 	for car := range Struct.BuildingQueue {
 		var bestRegister *Struct.CashRegister

@@ -1,25 +1,25 @@
 Gas:
-  total_cars: 23
-  total_time: 68
-  avg_queue_time: 4
+  total_cars: 29
+  total_time: 96
+  avg_queue_time: 8
   max_queue_time: 31
 Diesel:
-  total_cars: 24
-  total_time: 96
+  total_cars: 21
+  total_time: 78
   avg_queue_time: 7
   max_queue_time: 31
 LPG:
-  total_cars: 21
-  total_time: 104
-  avg_queue_time: 2
-  max_queue_time: 15
+  total_cars: 23
+  total_time: 115
+  avg_queue_time: 9
+  max_queue_time: 31
 Electric:
-  total_cars: 32
-  total_time: 228
-  avg_queue_time: 33
-  max_queue_time: 92
+  total_cars: 27
+  total_time: 182
+  avg_queue_time: 12
+  max_queue_time: 63
 Registers:
   total_cars: 100
-  total_time: 149
+  total_time: 152
   avg_queue_time: 3
   max_queue_time: 16

@@ -10,8 +10,9 @@ import (
 	"time"
 )
 
-// EvaluationRoutine - Collects global data for output and prints them
-func EvaluationRoutine(end *sync.WaitGroup) {
+// EvaluationRoutine - Collects global data for output.yaml and prints them
+// .done when ends <- sync
+func EvaluationRoutine(_end *sync.WaitGroup) {
 	// Cars
 	var totalCars int
 	var totalRegisterTime time.Duration
@@ -144,5 +145,5 @@ func EvaluationRoutine(end *sync.WaitGroup) {
 
 	fmt.Printf("Final statistics:\n%s\n", string(yamlStats))
 
-	end.Done()
+	_end.Done()
 }
