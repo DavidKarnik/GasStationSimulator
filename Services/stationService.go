@@ -44,7 +44,7 @@ func FindStandRoutine(stands []*Struct.FuelStand) {
 func FuelStandRoutine(fs *Struct.FuelStand) {
 	defer Struct.StandFinishWaiter.Done()
 	Struct.StandFinishWaiter.Add(1)
-	fmt.Printf("Fuel stand %d is open\n", fs.Id)
+	fmt.Printf("Fuel stand (%d)    -> open\n", fs.Id+1)
 	Struct.StandCreationWaiter.Done()
 	// Stand queue
 	for car := range fs.Queue {
@@ -56,7 +56,7 @@ func FuelStandRoutine(fs *Struct.FuelStand) {
 		// Wait for payment to complete
 		car.CarSync.Wait()
 	}
-	fmt.Printf("Fuel stand %d is closed\n", fs.Id)
+	fmt.Printf("Fuel stand (%d)    -> closed\n", fs.Id+1)
 }
 
 // doFuelingSleeping does fueling

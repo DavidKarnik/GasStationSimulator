@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gasStation/Services"
 	"gasStation/Struct"
 	"gopkg.in/yaml.v2"
@@ -15,6 +16,7 @@ var everythingEnds sync.WaitGroup
 // main function
 func main() {
 	loadConfigFile()
+	fmt.Printf("Gas Station Simulation -------------\n")
 
 	// initialize stands and registers -----------------------------------------
 	var stands []*Struct.FuelStand
@@ -65,7 +67,7 @@ func main() {
 	close(Struct.BuildingQueue)
 	Struct.RegisterWaiter.Wait()
 	close(Struct.Exit)
-
+	fmt.Printf("End of Simulation ------------------\n")
 	everythingEnds.Wait()
 }
 

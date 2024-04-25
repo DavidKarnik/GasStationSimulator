@@ -41,7 +41,7 @@ func FindCashRegister(registers []*Struct.CashRegister) {
 func RegisterRoutine(cs *Struct.CashRegister) {
 	defer Struct.RegisterWaiter.Done()
 	Struct.RegisterWaiter.Add(1)
-	fmt.Printf("Cash register %d is open\n", cs.Id)
+	fmt.Printf("Cash register (%d) -> open\n", cs.Id+1)
 	// Station shop queue
 	for car := range cs.Queue {
 		car.RegisterQueueTime = time.Duration(time.Since(car.RegisterQueueEnter).Milliseconds())
@@ -51,7 +51,7 @@ func RegisterRoutine(cs *Struct.CashRegister) {
 		// Sending car to exit queue
 		Struct.Exit <- car
 	}
-	fmt.Printf("Cash register %d is closed\n", cs.Id)
+	fmt.Printf("Cash register (%d) -> closed\n", cs.Id+1)
 }
 
 // doPaymentSleeping does payment

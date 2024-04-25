@@ -143,7 +143,8 @@ func EvaluationRoutine(_end *sync.WaitGroup) {
 		log.Fatalf("Error writing YAML to file: %v", err)
 	}
 
-	fmt.Printf("Final statistics:\n%s\n", string(yamlStats))
-
+	fmt.Printf("\nFinal Stats ------------------------")
+	fmt.Printf("\n%s\n", string(yamlStats))
+	fmt.Printf("End ----------------------------------\n")
 	_end.Done()
 }
