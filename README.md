@@ -74,3 +74,26 @@ registers:
   avg_queue_time: 2s
   max_queue_time: 5s
 ```
+### How to run
+
+To run this program in a Docker container, follow these steps:
+
+1. **Clone the Repository**: 
+    ```bash
+    git clone https://github.com/DavidKarnik/GasStationSimulator.git
+    cd yourrepository
+    ```
+2. **Run Docker engine**
+   
+3. **Build Docker Image**:
+    ```bash
+    docker build -t myprogram .
+    ```
+
+4. **Run Docker Container**:
+    ```bash
+    docker run -p 8080:8080 myprogram
+    ```
+
+5. **Access the Program**:
+    Once the Docker container is running, you can access the program by opening a web browser and navigating to `http://localhost:8080`.
