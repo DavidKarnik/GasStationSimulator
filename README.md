@@ -78,10 +78,9 @@ registers:
 
 To run this program in a Docker container, follow these steps:
 
-1. **Clone the Repository**: 
+1. **Clone this Repository**: 
     ```bash
     git clone https://github.com/DavidKarnik/GasStationSimulator.git
-    cd yourrepository
     ```
 2. **Run Docker engine**
    
