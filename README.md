@@ -83,16 +83,19 @@ To run this program in a Docker container, follow these steps:
     git clone https://github.com/DavidKarnik/GasStationSimulator.git
     ```
 2. **Run Docker engine**
-   
-3. **Build Docker Image**:
+    ```bash
+   dockerd
+    ```
+
+4. **Build Docker Image**:
     ```bash
     docker build -t myprogram .
     ```
 
-4. **Run Docker Container**:
+5. **Run Docker Container**:
     ```bash
     docker run -p 8080:8080 myprogram
     ```
 
-5. **Access the Program**:
+6. **Access the Program**:
     Once the Docker container is running, you can access the program by opening a web browser and navigating to `http://localhost:8080`.
